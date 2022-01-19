@@ -10,7 +10,7 @@ if (!microserviceDirectory) {
   process.exit(1);
 }
 
-const dbQuestion = {
+const databaseQuestion = {
   type: "list",
   name: "database",
   message: "Which database do you want to use?",
@@ -18,14 +18,26 @@ const dbQuestion = {
     "MySQL or MariaDB or compatible",
     "PostgreSQL or compatible",
     "MongoDB",
-    "None"
+    "None",
   ],
 };
 
+const requestProcessorQuestion = {
+  type: "checkbox",
+  name: "requestProcessor",
+  message: "Which request processors do you want to use?",
+  choices: ["HTTP Server", "Kafka Consumer", "Redis Consumer"],
+  validate(answers) {
+    if (answers.length < 1) {
+      return 'You must choose at least one request processor.';
+    }
+
+    return true;
+  },
+};
+
 inquirer
-  .prompt([
-   dbQuestion
-  ])
+  .prompt([databaseQuestion, requestProcessorQuestion])
   .then((answers) => {
     // Use user feedback for... whatever!!
   })
