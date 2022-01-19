@@ -4,9 +4,9 @@
 
 ## Prerequisites
 
-Node.js >= 16
+Node.js >= 12.19
 
-## Create new Backk microservice project
+## Create a new Backk microservice project
 
 ```bash
 npx backk-cli
