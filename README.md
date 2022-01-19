@@ -6,8 +6,8 @@
 
 Node.js >= 16
 
-## Installation
+## Create new Backk microservice project
 
 ```bash
-npm install -g backk-cli
+npx backk-cli
 ```
