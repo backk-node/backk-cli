@@ -1,0 +1,24 @@
+{
+  "name": "backk-cli",
+  "version": "1.0.0",
+  "description": "Backk CLI tool to create a new Backk microservice project",
+  "main": "index.js",
+  "bin": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backk-node/backk-cli.git"
+  },
+  "keywords": [
+    "Backk",
+    "cli"
+  ],
+  "author": "Petri Silen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/backk-node/backk-cli/issues"
+  },
+  "homepage": "https://github.com/backk-node/backk-cli#readme"
+}
