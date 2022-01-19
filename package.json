@@ -1,6 +1,6 @@
 {
   "name": "backk-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backk CLI tool to create a new Backk microservice project",
   "main": "index.js",
   "bin": "index.js",
