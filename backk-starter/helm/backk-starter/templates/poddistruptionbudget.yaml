@@ -1,0 +1,11 @@
+{{- if eq .Values.nodeEnv "production" }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "microservice.fullname" . }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "microservice.name" . }}
+{{- end }}

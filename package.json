@@ -4,6 +4,9 @@
   "description": "Backk CLI tool to create a new Backk microservice project",
   "main": "index.js",
   "bin": "index.js",
+  "files": [
+    "backk-starter"
+  ],
   "scripts": {
     "test": "npm test"
   },
@@ -20,5 +23,11 @@
   "bugs": {
     "url": "https://github.com/backk-node/backk-cli/issues"
   },
-  "homepage": "https://github.com/backk-node/backk-cli#readme"
+  "homepage": "https://github.com/backk-node/backk-cli#readme",
+  "dependencies": {
+    "inquirer": "8.2.0"
+  },
+  "devDependencies": {
+    "prettier": "2.5.1"
+  }
 }

@@ -1,0 +1,50 @@
+imageRegistry: docker.io
+imageRepository: <your-repository-namespace>/backk-starter
+imageTag: pksilen-main
+nodeEnv: integration
+apiGatewayFqdn: localhost
+observability:
+  jaegerAgentHost: localhost
+auth:
+  authServerPublicKeyUrl: ""
+  publicKeyPath: ""
+  jwtRolesClaimPath: ""
+integrationTesting:
+  testUserRole: vitjaAdmin
+secrets:
+  encryptionKey: abcdefghijklmnopqrstuvxyz01234567890123456789
+httpServer:
+  port: 8080
+  maxRequestContentLengthInBytes: 1073741824
+kafka:
+  host: host.minikube.internal
+  port: 9092
+redis:
+  host: host.minikube.internal
+  port: 6379
+redisCache:
+  shouldInstall: false
+  host: host.minikube.internal
+  port: 6379
+database:
+  mongoDb:
+    shouldInstall: false
+    host: host.minikube.internal
+    port: 27017
+    user:
+    password:
+  mySql:
+    shouldInstall: false
+    host: host.minikube.internal
+    port: 3306
+    user: root
+    password: password
+  postgreSql:
+    shouldInstall: false
+    host: host.minikube.internal
+    port: 5432
+    user: postgres
+    password: postgres
+
+service:
+  type: NodePort

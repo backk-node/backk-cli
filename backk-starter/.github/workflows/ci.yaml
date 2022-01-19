@@ -1,0 +1,222 @@
+name: Continuous integration workflow
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - '**'
+  pull_request:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test with Node version ${{ matrix.node }}
+    strategy:
+      matrix:
+        node: [ '12', '14' ]
+    steps:
+      - name: Checkout Git repo
+        uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+  build:
+    runs-on: ubuntu-latest
+    name: Build with Node version 16
+    steps:
+      - name: Checkout Git repo
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      - name: Skip installing Husky
+        run: npm set-script prepare ""
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Lint source code
+        run: npm run lint
+
+      - name: Setup integration testing environment
+        run: docker-compose --env-file .env.ci up --build -d
+
+      - name: Run integration tests
+        run: scripts/run-integration-tests-in-ci.sh
+
+      - name: OWASP ZAP API scan
+        uses: zaproxy/action-api-scan@v0.1.0
+        with:
+          target: generated/openapi/openApiPublicSpec.yaml
+          fail_action: true
+          cmd_options: -I -z "-config replacer.full_list(0).description=auth1 -config replacer.full_list(0).enabled=true -config replacer.full_list(0).matchtype=REQ_HEADER -config replacer.full_list(0).matchstr=Authorization -config replacer.full_list(0).regex=false -config 'replacer.full_list(0).replacement=Bearer ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnpkV0lpT2lKbVltUmlOR1UwWVMwMlpUa3pMVFJpTURndFlURmxOeTB3WWpkaVpEQTROVEl3WVRZaUxDSnBjM01pT2lKb2RIUndPaTh2Ykc5allXeG9iM04wT2pnd09EQXZZWFYwYUM5eVpXRnNiWE12ZEdWemRDSXNJbkpsWVd4dFgyRmpZMlZ6Y3lJNmV5SnliMnhsY3lJNld5SjJhWFJxWVVGa2JXbHVJbDE5TENKcFlYUWlPakUyTkRFME5Ua3pOREo5LmZ6Mk1Eb2ZzaUN6amtoYTlrNjlLNFlHelhEZjI1bFpUZjRNQzJoMzRhelE='"
+
+      - name: Tear down integration testing environment
+        run: docker-compose --env-file .env.ci down -v
+
+      - name: Static code analysis with SonarCloud scan
+        uses: sonarsource/sonarcloud-github-action@v1.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # TODO: In your Github repo in Settings > Secrets, set SONAR_TOKEN secret
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Legal and compliance analysis with FOSSA
+        uses: fossas/fossa-action@v1
+        with:
+          # TODO: In your Github repo in Settings > Secrets, set FOSSA_API_KEY secret
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+          run-tests: false
+
+      - name: Log in to Docker registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.io
+          # TODO: In your Github repo in Settings > Secrets, set DOCKER_REGISTRY_USERNAME secret
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          # TODO: In your Github repo in Settings > Secrets, set DOCKER_REGISTRY_PASSWORD secret
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Extract latest Git tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        id: extractLatestGitTag
+
+      - name: Extract Git branch name
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: echo "##[set-output name=value;]${GITHUB_REF#refs/heads/}"
+        id: extractGitBranchName
+
+      - name: Set build version
+        uses: haya14busa/action-cond@v1
+        id: setBuildVersion
+        with:
+          cond: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*' }}
+          if_true: "${{ steps.extractLatestGitTag.outputs.tag }}"
+          if_false: "${{ steps.extractGitBranchName.outputs.value }}-${{ github.run_attempt }}-${{ github.sha }}"
+
+      - name: Set up Docker Buildx
+        id: setupBuildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push Docker image when in feature branch
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/patch_v*'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.setupBuildx.outputs.name }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          tags: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter:${{ steps.setBuildVersion.outputs.value }}
+
+      - name: Extract metadata for building and pushing Docker image when in main or maintenance branch
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*'
+        id: dockerImageMetadata
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.setBuildVersion.outputs.value }}
+
+      - name: Build and push Docker image when in main or maintenance branch
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*'
+        id: dockerImageBuildAndPush
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.setupBuildx.outputs.name }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          tags: ${{ steps.dockerImageMetadata.outputs.tags }}
+          labels: ${{ steps.dockerImageMetadata.outputs.labels }}
+
+      - name: Docker image vulnerability scan with Anchore
+        id: anchoreScan
+        uses: anchore/scan-action@v3
+        with:
+          image: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter:latest
+          fail-build: false
+          severity-cutoff: high
+
+      - name: Upload Anchore scan SARIF report
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ steps.anchoreScan.outputs.sarif }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.7.2
+
+      - name: Extract microservice version from Git tag
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*'
+        id: extractMicroserviceVersionFromGitTag
+        run: |
+          value="${{ steps.setBuildVersion.outputs.value }}"
+          value=${value:1}
+          echo "::set-output name=value::$value"
+
+      - name: Set microservice version
+        uses: haya14busa/action-cond@v1
+        id: setMicroserviceVersion
+        with:
+          cond: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*' }}
+          if_true: "${{ steps.extractMicroserviceVersionFromGitTag.outputs.value }}"
+          if_false: "${{ steps.buildVersion.outputs.value }}"
+
+      - name: Update Helm chart versions in Chart.yaml
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.setMicroserviceVersion.outputs.value }}/g" helm/backk-starter/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: ${{ steps.setMicroserviceVersion.outputs.value }}/g" helm/backk-starter/Chart.yaml
+
+      - name: Define docker image tag
+        uses: haya14busa/action-cond@v1
+        id: defineDockerImageTag
+        with:
+          cond: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*' }}
+          if_true: "${{ steps.setMicroserviceVersion.outputs.value }}@${{ steps.dockerImageBuildAndPush.outputs.digest }}"
+          if_false: "${{ steps.setMicroserviceVersion.outputs.value }}"
+
+      - name: Update Docker image tag in values.yaml
+        run: |
+          sed -i "s/^imageTag:.*/imageTag: ${{ steps.defineDockerImageTag.outputs.value }}/g" helm/backk-starter/values.yaml
+
+      - name: Lint Helm chart
+        run: helm lint -f helm/values/values-minikube.yaml helm/backk-starter
+
+      - name: Configure Git user
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Package and publish Helm chart
+        uses: helm/chart-releaser-action@v1.2.1
+        with:
+          charts_dir: helm
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

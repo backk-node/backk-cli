@@ -1,0 +1,12 @@
+{{- if eq .Values.apiGateway.type "AmbassadorEdgeStack" -}}
+apiVersion: getambassador.io/v3alpha1
+kind: RateLimit
+metadata:
+  name: {{ include "microservice.fullname" . }}
+spec:
+  domain: ambassador
+  limits:
+    - pattern: [{remote_address: "*"}]
+      rate: 120
+      unit: minute
+{{- end }}

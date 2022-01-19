@@ -1,0 +1,218 @@
+# Docker image registy, for example: docker.io
+imageRegistry: docker.io
+
+# Docker image repository, for example: my-sw-system/my-microservice
+imageRepository: pksilen2/backk-example-microservice
+
+# Docker image tag, for example: 1.0.0
+imageTag:
+
+# Microservice execution environment: development, integration or production
+nodeEnv: production
+
+# Fully qualified domain name of Kubernetes cluster edge/API gateway or localhost in Minikube
+apiGatewayFqdn:
+
+observability:
+  # Default logging level: DEBUG, INFO, WARN, ERROR or FATAL
+  # Logging level of a running microservice pod can be changed by changing the logging level (LOG_LEVEL) in microservice's ConfigMap
+  logLevel: INFO
+
+  jaegerAgentHost:
+
+# Required in production
+auth:
+  # Authorization Server URL where to fetch the JWT signing public key.
+  # For example, if you have Keycloak installed in Kubernetes namespace 'platform':
+  # http://keycloak.platform.svc.cluster.local:8080/auth/realms/<my-realm> or
+  # http://keycloak.platform.svc.cluster.local:8080/auth/realms/<my-realm>/protocol/openid-connect/certs
+  authServerPublicKeyUrl:
+
+  # Path where public key is available in public key fetch response (from authServerPublicKeyUrl)
+  # For example: 'public_key' or 'keys[0].n'
+  publicKeyPath:
+
+  # JWT path where for user's roles, for example 'realm_access.roles'
+  jwtRolesClaimPath:
+
+# Needed only in 'development' and 'integration' environments for running integration tests
+integrationTesting:
+  testUserRole:
+
+secrets:
+  # In production environment, encryption key must fulfill following requirements:
+  # - at least 32 characters long
+  # - must contain at least one lowercase character, one uppercase character and one number.
+  # - may have at maximum 3 alphabetically consecutive letters or numerically consecutive digits (e.g. abcd and 1234 are prohibited).
+  # - may contain at maximum 3 repeating characters/numbers (e.g. 1111 and aaaa are prohibited).
+  # - may contain at maximum 4 keyboard layout consecutive characters, (e.g. qwert and asdfg are prohibited)'
+  encryptionKey:
+
+# Needed if HttpServer request processor is used in the microservice
+httpServer:
+  port: &httpServerPort 8080
+  maxRequestContentLengthInBytes:
+
+kafka:
+  # Needed if Kafka is used by the microservice
+  # For example, if you have Kafka installed in Kubernetes namespace 'platform':
+  # host: kafka.platform.svc.cluster
+  host:
+  port: 9092
+
+redis:
+  # Needed if Redis is used by the microservice
+  # For example, if you have Redis installed in Kubernetes namespace 'platform':
+  # host: redis.platform.svc.cluster
+  host:
+  port: 6379
+
+redisCache:
+  # Specify if Helm should install Redis cache for the microservice
+  shouldInstall: false
+  host:
+  port: 6379
+  password: &redisCachePassword ""
+
+database:
+  mongoDb:
+    # Specify if Helm should install MongoDB for the microservice
+    shouldInstall: false
+
+    # Needed if MongoDb is used by the microservice, for example: my-microservice-mongodb.default.svc.cluster.local
+    host:
+
+    port: 27017
+
+    # Needed in production environment
+    user:
+
+    # Needed in production environment
+    # In production environment, password must fulfill following requirements:
+    # - at least 32 characters long
+    # - must contain at least one lowercase character, one uppercase character and one number.
+    # - may have at maximum 3 alphabetically consecutive letters or numerically consecutive digits (e.g. abcd and 1234 are prohibited).
+    # - may contain at maximum 3 repeating characters/numbers (e.g. 1111 and aaaa are prohibited).
+    # - may contain at maximum 4 keyboard layout consecutive characters, (e.g. qwert and asdfg are prohibited)'
+    password: &mongoDbPassword ""
+
+  mySql:
+    # Specify if Helm should install MySQL for the microservice
+    shouldInstall: false
+
+    # Needed if MySQL is used by the microservice, for example: my-microservice-mysql.default.svc.cluster.local
+    host:
+
+    port: 3306
+
+    # Needed if MySQL is used by the microservice
+    user:
+    # Needed if MySQL is used by the microservice
+    # In production environment, password must fulfill following requirements:
+    # - at least 32 characters long
+    # - must contain at least one lowercase character, one uppercase character and one number.
+    # - may have at maximum 3 alphabetically consecutive letters or numerically consecutive digits (e.g. abcd and 1234 are prohibited).
+    # - may contain at maximum 3 repeating characters/numbers (e.g. 1111 and aaaa are prohibited).
+    # - may contain at maximum 4 keyboard layout consecutive characters, (e.g. qwert and asdfg are prohibited)'
+    password: &mySqlPassword ""
+
+  postgreSql:
+    # Specify if Helm should install PostgreSQL for the microservice
+    shouldInstall: false
+
+    # Needed if PostgreSQL is used by the microservice, for example: my-microservice-postgresql.default.svc.cluster.local
+    host:
+
+    port: 5432
+
+    # Needed if PostgreSQL is used by the microservice
+    user:
+
+    # Needed if PostgreSQL is used by the microservice
+    # In production environment, password must fulfill following requirements:
+    # - at least 32 characters long
+    # - must contain at least one lowercase character, one uppercase character and one number.
+    # - may have at maximum 3 alphabetically consecutive letters or numerically consecutive digits (e.g. abcd and 1234 are prohibited).
+    # - may contain at maximum 3 repeating characters/numbers (e.g. 1111 and aaaa are prohibited).
+    # - may contain at maximum 4 keyboard layout consecutive characters, (e.g. qwert and asdfg are prohibited)'
+    password: &postgreSqlPassword ""
+
+mysql:
+  auth:
+    rootPassword: *mySqlPassword
+
+mongodb:
+  auth:
+    rootPassword: *mongoDbPassword
+
+global:
+  # Storage class for database persistent volumes
+  storageClass: ""
+  postgresql:
+    postgresqlPassword: *postgreSqlPassword
+  redis:
+    password: *redisCachePassword
+
+deployment:
+  pod:
+    annotations: {}
+    imagePullSecrets: []
+    container:
+      imagePullPolicy: Always
+      securityContext:
+        privileged: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        allowPrivilegeEscalation: false
+      env:
+        jwtSignSecret: abcdef
+      startupProbe:
+        failureThreshold: 30
+      resources:
+        development:
+          limits:
+            cpu: '1'
+            memory: 768Mi
+          requests:
+            cpu: '1'
+            memory: 768Mi
+        integration:
+          limits:
+            cpu: '1'
+            memory: 768Mi
+          requests:
+            cpu: '1'
+            memory: 768Mi
+        production:
+          limits:
+            cpu: 1
+            memory: 768Mi
+          requests:
+            cpu: 1
+            memory: 768Mi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+hpa:
+  minReplicas: 2
+  maxReplicas: 1000
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+service:
+  type: ClusterIP
+  port: *httpServerPort
+#  nodePort:
+
+serviceAccount:
+  shouldCreate: false
+  annotations: {}
+
+apiGateway:
+  type: None

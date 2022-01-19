@@ -1,0 +1,15 @@
+{{- if or (eq .Values.apiGateway.type "AmbassadorEdgeStack") (eq .Values.apiGateway.type "EmissaryIngress") -}}
+apiVersion: getambassador.io/v3alpha1
+kind:  Mapping
+metadata:
+  name:  {{ include "microservice.fullname" . }}
+spec:
+  hostname: "*"
+  prefix: /{{ include "microservice.name" . }}.{{ .Release.Namespace }}/
+  service: {{ include "microservice.fullname" . }}.{{ .Release.Namespace }}
+  labels:
+    ambassador:
+      - request_label_group:
+          - remote_address:
+              key: remote_address
+{{- end }}

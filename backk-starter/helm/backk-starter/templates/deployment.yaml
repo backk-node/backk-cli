@@ -1,0 +1,202 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  {{- if ne .Values.nodeEnv "production" }}
+  replicas: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "microservice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.deployment.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "microservice.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.deployment.pod.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "microservice.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.imageRegistry }}/{{ .Values.imageRepository }}:{{ .Values.imageTag }}"
+          imagePullPolicy: {{ .Values.deployment.pod.container.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.deployment.pod.container.securityContext | nindent 12 }}
+          {{- if .Values.httpServer.port }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.httpServer.port }}
+              protocol: TCP
+          {{- end }}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.nodeEnv }}
+            - name: MICROSERVICE_VERSION
+              value: {{ .Chart.Version }}
+            - name: HTTP_SERVER_PORT
+              value: "{{ .Values.httpServer.port }}"
+            - name: MAX_REQUEST_CONTENT_LENGTH_IN_BYTES
+              value: "{{ .Values.httpServer.maxRequestContentLengthInBytes }}"
+            - name: JAEGER_AGENT_HOST
+              value: {{ .Values.observability.jaegerAgentHost }}
+            - name: AUTH_SERVER_PUBLIC_KEY_URL
+              value: {{ .Values.auth.authServerPublicKeyUrl }}
+            - name: PUBLIC_KEY_PATH
+              value: {{ .Values.auth.publicKeyPath }}
+            - name: JWT_ROLES_CLAIM_PATH
+              value: {{ .Values.auth.jwtRolesClaimPath }}
+            - name: JWT_SIGN_SECRET
+              value: {{ .Values.deployment.pod.container.env.jwtSignSecret }}
+            - name: TEST_USER_ROLE
+              value: {{ .Values.integrationTesting.testUserRole }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: encryptionKey
+            - name: MICROSERVICE_NAME
+              value: {{ include "microservice.fullname" . }}
+            - name: MICROSERVICE_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MICROSERVICE_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: KAFKA_HOST
+              value: {{ .Values.kafka.host }}
+            - name: KAFKA_PORT
+              value: "{{ .Values.kafka.port }}"
+            - name: REDIS_HOST
+              value: {{ .Values.redis.host }}
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+            - name: REDIS_CACHE_HOST
+              value: {{ .Values.redisCache.host }}
+            - name: REDIS_CACHE_PORT
+              value: "{{ .Values.redisCache.port }}"
+            - name: API_GATEWAY_FQDN
+              value: {{ .Values.apiGatewayFqdn }}
+            - name: MONGODB_HOST
+              value: {{ .Values.database.mongoDb.host }}
+            - name: MONGODB_PORT
+              value: "{{ .Values.database.mongoDb.port }}"
+            {{- if .Values.database.mongoDb.user }}
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: mongoDbUser
+            {{- end }}
+            {{- if .Values.database.mongoDb.password }}
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: mongoDbPassword
+            {{- end }}
+            - name: MYSQL_HOST
+              value: {{ .Values.database.mySql.host }}
+            - name: MYSQL_PORT
+              value: "{{ .Values.database.mySql.port }}"
+            {{- if .Values.database.mySql.user }}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: mySqlUser
+            {{- end }}
+            {{- if .Values.database.mySql.password }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: mySqlPassword
+            {{- end }}
+            - name: POSTGRESQL_HOST
+              value: {{ .Values.database.postgreSql.host }}
+            - name: POSTGRESQL_PORT
+              value: "{{ .Values.database.postgreSql.port }}"
+            {{- if .Values.database.postgreSql.user }}
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: postgreSqlUser
+            {{- end }}
+            {{- if .Values.database.postgreSql.password }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "microservice.fullname" . }}
+                  key: postgreSqlPassword
+            {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/etc/config"
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /livenessCheckService.isMicroserviceAlive
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readinessCheckService.isMicroserviceReady
+              port: http
+            failureThreshold: 3
+            periodSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /startupCheckService.isMicroserviceStarted
+              port: http
+            failureThreshold: {{ .Values.deployment.pod.container.startupProbe.failureThreshold }}
+            periodSeconds: 10
+          resources:
+            {{- if eq .Values.nodeEnv "development" }}
+            {{- toYaml .Values.deployment.pod.container.resources.development | nindent 12 }}
+            {{- else if eq .Values.nodeEnv "integration"  }}
+            {{- toYaml .Values.deployment.pod.container.resources.integration | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.deployment.pod.container.resources.production | nindent 12 }}
+            {{- end}}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "microservice.fullname" . }}
+            items:
+              - key: "LOG_LEVEL"
+                path: "LOG_LEVEL"
+      {{- with .Values.deployment.pod.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.pod.affinity }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: {{ include "microservice.name" . }}
+              topologyKey: "kubernetes.io/hostname"
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.pod.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

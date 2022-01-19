@@ -1,0 +1,561 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/values",
+  "definitions": {
+    "values": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imageRegistry": {
+          "type": "string"
+        },
+        "imageRepository": {
+          "type": "string"
+        },
+        "imageTag": {
+          "type": "string"
+        },
+        "nodeEnv": {
+          "type": "string",
+          "enum": ["development", "integration", "production"]
+        },
+        "apiGatewayFqdn": {
+          "type": "string"
+        },
+        "observability": {
+          "$ref": "#/definitions/Observability"
+        },
+        "auth": {
+          "$ref": "#/definitions/Auth"
+        },
+        "integrationTesting": {
+          "$ref": "#/definitions/IntegrationTesting"
+        },
+        "secrets": {
+          "$ref": "#/definitions/Secrets"
+        },
+        "httpServer": {
+          "$ref": "#/definitions/HTTPServer"
+        },
+        "kafka": {
+          "$ref": "#/definitions/Kafka"
+        },
+        "redis": {
+          "$ref": "#/definitions/Kafka"
+        },
+        "redisCache": {
+          "$ref": "#/definitions/RedisCache"
+        },
+        "database": {
+          "$ref": "#/definitions/Database"
+        },
+        "deployment": {
+          "$ref": "#/definitions/Deployment"
+        },
+        "hpa": {
+          "$ref": "#/definitions/Hpa"
+        },
+        "service": {
+          "$ref": "#/definitions/Service"
+        },
+        "serviceAccount": {
+          "$ref": "#/definitions/ServiceAccount"
+        },
+        "mysql": {
+          "$ref": "#/definitions/MySql"
+        },
+        "mongodb": {
+          "$ref": "#/definitions/MongoDb"
+        },
+        "global": {
+          "$ref": "#/definitions/Global"
+        },
+        "apiGateway": {
+          "$ref": "#/definitions/ApiGateway"
+        }
+      },
+      "required": ["apiGatewayFqdn", "deployment", "hpa", "nodeEnv", "secrets", "service", "serviceAccount"],
+      "title": "Values"
+    },
+    "Global": {
+      "type": "object",
+      "properties": {
+        "storageClass": {
+          "type": "string"
+        },
+        "postgresql": {
+          "type": "object",
+          "properties": {
+            "postgresqlPassword": {
+              "type": "string"
+            }
+          }
+        },
+        "redis": {
+          "type": "object",
+          "properties": {
+            "password": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "MySql": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "object",
+          "properties": {
+            "rootPassword": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "MongoDb": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "object",
+          "properties": {
+            "rootPassword": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authServerPublicKeyUrl": {
+          "type": "string"
+        },
+        "publicKeyPath": {
+          "type": "string"
+        },
+        "jwtRolesClaimPath": {
+          "type": "string"
+        }
+      },
+      "required": ["authServerPublicKeyUrl", "jwtRolesClaimPath", "publicKeyPath"],
+      "title": "Auth"
+    },
+    "Database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mongoDb": {
+          "$ref": "#/definitions/DbProperties"
+        },
+        "mySql": {
+          "$ref": "#/definitions/DbProperties"
+        },
+        "postgreSql": {
+          "$ref": "#/definitions/DbProperties"
+        }
+      },
+      "required": [],
+      "title": "Database"
+    },
+    "DbProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shouldInstall": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 29999
+        },
+        "user": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": ["host", "port", "shouldInstall"],
+      "title": "MongoDB"
+    },
+    "Deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pod": {
+          "$ref": "#/definitions/Pod"
+        }
+      },
+      "required": ["pod"],
+      "title": "Deployment"
+    },
+    "Pod": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/Annotations"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {}
+        },
+        "container": {
+          "$ref": "#/definitions/Container"
+        },
+        "nodeSelector": {
+          "$ref": "#/definitions/Annotations"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {}
+        },
+        "affinity": {
+          "$ref": "#/definitions/Annotations"
+        }
+      },
+      "required": ["affinity", "annotations", "container", "imagePullSecrets", "nodeSelector", "tolerations"],
+      "title": "Pod"
+    },
+    "Annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "title": "Annotations"
+    },
+    "Container": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imagePullPolicy": {
+          "type": "string"
+        },
+        "securityContext": {
+          "$ref": "#/definitions/SecurityContext"
+        },
+        "env": {
+          "$ref": "#/definitions/Env"
+        },
+        "resources": {
+          "$ref": "#/definitions/Resources"
+        },
+        "startupProbe": {
+          "$ref": "#/definitions/StartupProbe"
+        }
+      },
+      "required": ["env", "imagePullPolicy", "resources", "securityContext", "startupProbe"],
+      "title": "Container"
+    },
+    "StartupProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failureThreshold": {
+          "type": "integer"
+        }
+      }
+    },
+    "Env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jwtSignSecret": {
+          "type": "string"
+        }
+      },
+      "required": ["jwtSignSecret"],
+      "title": "Env"
+    },
+    "Resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "development": {
+          "$ref": "#/definitions/Development"
+        },
+        "integration": {
+          "$ref": "#/definitions/Development"
+        },
+        "production": {
+          "$ref": "#/definitions/Production"
+        }
+      },
+      "required": ["development", "integration", "production"],
+      "title": "Resources"
+    },
+    "Development": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limits": {
+          "$ref": "#/definitions/DevelopmentLimits"
+        },
+        "requests": {
+          "$ref": "#/definitions/DevelopmentLimits"
+        }
+      },
+      "required": ["limits", "requests"],
+      "title": "Development"
+    },
+    "DevelopmentLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "required": ["cpu", "memory"],
+      "title": "DevelopmentLimits"
+    },
+    "Production": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limits": {
+          "$ref": "#/definitions/ProductionLimits"
+        },
+        "requests": {
+          "$ref": "#/definitions/ProductionLimits"
+        }
+      },
+      "required": ["limits", "requests"],
+      "title": "Production"
+    },
+    "ProductionLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "type": "integer"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "required": ["cpu", "memory"],
+      "title": "ProductionLimits"
+    },
+    "SecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "privileged": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "$ref": "#/definitions/Capabilities"
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "type": "integer"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "privileged",
+        "allowPrivilegeEscalation",
+        "capabilities",
+        "readOnlyRootFilesystem",
+        "runAsGroup",
+        "runAsNonRoot",
+        "runAsUser"
+      ],
+      "title": "SecurityContext"
+    },
+    "Capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "drop": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["drop"],
+      "title": "Capabilities"
+    },
+    "Hpa": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minReplicas": {
+          "type": "integer"
+        },
+        "maxReplicas": {
+          "type": "integer"
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer"
+        },
+        "targetMemoryUtilizationPercentage": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "maxReplicas",
+        "minReplicas",
+        "targetCPUUtilizationPercentage",
+        "targetMemoryUtilizationPercentage"
+      ],
+      "title": "Hpa"
+    },
+    "HTTPServer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 29999
+        },
+        "maxRequestContentLengthInBytes": {
+          "type": "integer"
+        }
+      },
+      "required": ["maxRequestContentLengthInBytes", "port"],
+      "title": "HTTPServer"
+    },
+    "IntegrationTesting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "testUserRole": {
+          "type": "string"
+        }
+      },
+      "title": "IntegrationTesting"
+    },
+    "Kafka": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 29999
+        }
+      },
+      "required": ["host", "port"],
+      "title": "Kafka"
+    },
+    "Observability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"]
+        },
+        "jaegerAgentHost": {
+          "type": "string"
+        }
+      },
+      "required": ["logLevel"],
+      "title": "Observability"
+    },
+    "RedisCache": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shouldInstall": {
+          "type": "boolean"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 29999
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": ["host", "port", "shouldInstall"],
+      "title": "RedisCache"
+    },
+    "Secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "encryptionKey": {
+          "type": "string",
+          "minLength": 32
+        }
+      },
+      "required": ["encryptionKey"],
+      "title": "Secrets"
+    },
+    "Service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 29999
+        },
+        "nodePort": {
+          "type": "integer"
+        }
+      },
+      "required": ["port", "type"],
+      "title": "Service"
+    },
+    "ServiceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shouldCreate": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "$ref": "#/definitions/Annotations"
+        }
+      },
+      "required": ["annotations", "shouldCreate"],
+      "title": "ServiceAccount"
+    },
+    "ApiGateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["None", "EmissaryIngress", "AmbassadorEdgeStack"]
+        }
+      },
+      "title": "ApiGateway"
+    }
+  }
+}
