@@ -130,7 +130,7 @@ async function createMicroserviceProject(microserviceName) {
       type: "input",
       name: "dependentBackkMicroservice",
       message:
-        "What other Backk microservices your microservice depend on? Provide the names of the microservices separated by commas",
+        "What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas",
     };
 
     const dependentBackkMicroservicesAnswer = inquirer.prompt([
