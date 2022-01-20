@@ -295,11 +295,29 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"ioredis": "^4.19.2",,\s*/g
+          /\s*"ioredis": "^4.19.2",\s*/g
         ],
         to: [""]
       });
     }
+
+    await replaceInFile({
+      files: [microserviceDir + "/.env.dev", microserviceDir + "/.env.ci"],
+      from: [
+        /DOCKER_REGISTRY=docker.io/g
+      ],
+      to: ["DOCKER_REGISTRY=" + devDockerRegistryAnswer.dockerRegistry]
+    });
+
+    await replaceInFile({
+      files: [microserviceDir + "/.env.dev", microserviceDir + "/.env.ci"],
+      from: [
+        /DOCKER_REPOSITORY=<your-repository-namespace>\/backk-starter/g
+      ],
+      to: ["DOCKER_REPOSITORY=" + devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace + '/' + microserviceName]
+    });
+
+
 
     console.log(
       "Successfully created Backk microservice project: " + microserviceName
