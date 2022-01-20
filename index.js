@@ -1,46 +1,26 @@
 #!/usr/bin/env node
-const inquirer = require("inquirer");
 
-const microserviceDirectory = process.argv[2];
+const createMicroserviceProject = require('createMicroserviceProject');
 
-if (!microserviceDirectory) {
+const operation = process.argv[2];
+if (operation.toLowerCase() !== 'create') {
   console.log(
-    "You must give the microservice directory as command line argument."
+    'You must give the operation to execute. One of following: create'
   );
   process.exit(1);
 }
+const microserviceName = process.argv[3];
+if (!microserviceName) {
+  console.log('You must give the microservice name');
+  process.exit(1);
+}
 
-const databaseQuestion = {
-  type: "list",
-  name: "database",
-  message: "Which database do you want to use?",
-  choices: [
-    "MySQL or MariaDB or compatible",
-    "PostgreSQL or compatible",
-    "MongoDB",
-    "None",
-  ],
-};
+if (!microserviceName.match(/^[a-z\-0-9]$/)) {
+  console.log('Invalid microservice name: ' + microserviceName + '. Microservice name can contain only lowercase letters, numbers and hyphens');
+  process.exit(1);
+}
 
-const requestProcessorQuestion = {
-  type: "checkbox",
-  name: "requestProcessor",
-  message: "Which request processors do you want to use?",
-  choices: ["HTTP Server", "Kafka Consumer", "Redis Consumer"],
-  validate(answers) {
-    if (answers.length < 1) {
-      return 'You must choose at least one request processor.';
-    }
+// noinspection JSIgnoredPromiseFromCall
+createMicroserviceProject();
 
-    return true;
-  },
-};
 
-inquirer
-  .prompt([databaseQuestion, requestProcessorQuestion])
-  .then((answers) => {
-    // Use user feedback for... whatever!!
-  })
-  .catch((error) => {
-    console.log(error);
-  });
