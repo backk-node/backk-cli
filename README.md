@@ -7,7 +7,7 @@
 Node.js >= 12.19
 
 ## Preparation
-When create a new Backk microservice project with `backk-cli`, prepare to answer to following questions:
+Before creating a new Backk microservice project with `backk-cli`, prepare to answer to following questions:
 
 * Which database do you want to use?
   * MySQL or MariaDB or compatible
