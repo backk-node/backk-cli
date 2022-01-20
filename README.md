@@ -19,10 +19,10 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
   * Kafka consumer
   * Redis consumer
 * Which HTTP version do you want to use for HTTP server? (This will be asked only if you selected HTTP server in the previous question)
-  * HTTP/1.1
+  * HTTP/1.1 (default)
   * HTTP/2
-* Do you want to access remote microservices using Kafka? (Yes/No) (This will be asked only if you did not select Kafka consumer in one of the earlier questions)
-* Do you want to access remote microservices using Redis? (Yes/No) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
+* Do you want to access remote microservices using Kafka? (Yes/**No**) (This will be asked only if you did not select Kafka consumer in one of the earlier questions)
+* Do you want to access remote microservices using Redis? (Yes/**No**) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
 * What Docker registry do you want to use in development environment? (Default: docker.io)
 * What Docker repository namespace do you want to use in development environment?
 * What Docker registry do you want to use for main branch releases? (Default: docker.io)

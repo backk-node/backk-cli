@@ -51,7 +51,7 @@ async function createMicroserviceProject(microserviceName) {
 
     let httpVersionAnswer = {};
 
-    if (requestProcessorsAnswer.requestProcessors.includes("HTTP Server")) {
+    if (requestProcessorsAnswer.requestProcessors.includes("HTTP server")) {
       const httpVersionQuestion = {
         type: "list",
         name: "httpVersion",
