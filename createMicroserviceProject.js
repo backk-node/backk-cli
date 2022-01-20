@@ -28,6 +28,7 @@ async function createMicroserviceProject(microserviceName) {
         "None",
       ],
     };
+
     const databaseAnswer = await inquirer.prompt([databaseQuestion]);
 
     const requestProcessorQuestion = {
@@ -49,6 +50,7 @@ async function createMicroserviceProject(microserviceName) {
     ]);
 
     let httpVersionAnswer = {};
+
     if (requestProcessorsAnswer.requestProcessors.includes("HTTP Server")) {
       const httpVersionQuestion = {
         type: "list",
@@ -62,6 +64,7 @@ async function createMicroserviceProject(microserviceName) {
     }
 
     let kafkaUsageAnswer = { doesUseKafka: true };
+
     if (!requestProcessorsAnswer.requestProcessors.includes("Kafka consumer")) {
       const kafkaUsageQuestion = {
         type: "confirm",
@@ -74,6 +77,7 @@ async function createMicroserviceProject(microserviceName) {
     }
 
     let redisUsageAnswer = { doesUseRedis: true };
+
     if (!requestProcessorsAnswer.requestProcessors.includes("Redis consumer")) {
       const redisUsageQuestion = {
         type: "confirm",
@@ -474,6 +478,7 @@ async function createMicroserviceProject(microserviceName) {
     );
   } catch (error) {
     console.log(error);
+    console.log('Failed to create Backk microservice project: ' + microserviceName);
     process.exit(1);
   }
 }
