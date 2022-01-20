@@ -1,10 +1,18 @@
 const fs = require("fs");
 const inquirer = require("inquirer");
 const copyfiles = require("copyfiles");
-const replaceInFile = require("replace-in-file");
+const { replaceInFile } = require("replace-in-file");
+const YAML = require("yaml");
 
+// noinspection FunctionWithMoreThanThreeNegationsJS,OverlyComplexFunctionJS,FunctionTooLongJS
 async function createMicroserviceProject(microserviceName) {
   try {
+    const dockerComposeObj = YAML.parse(
+      process.cwd() +  + "/backk-starter/docker-compose.yml"
+    );
+
+    const dockerComposeCommandParts = ["docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001"];
+
     const databaseQuestion = {
       type: "list",
       name: "database",
@@ -67,7 +75,7 @@ async function createMicroserviceProject(microserviceName) {
         message: "Do you want to access remote microservices using Redis?",
       };
 
-      redisUsageAnswer = inquirer.prompt(kafkaUsageQuestion);
+      redisUsageAnswer = inquirer.prompt(redisUsageQuestion);
     }
 
     const devDockerRegistryQuestion = {
@@ -93,43 +101,28 @@ async function createMicroserviceProject(microserviceName) {
       devDockerRepositoryNamespaceQuestion,
     ]);
 
-    const enableGithubWorkflowQuestion = {
-      type: "confirm",
-      name: "shouldEnableGithubWorkflow",
+    const mainDockerRegistryQuestion = {
+      type: "input",
+      name: "dockerRegistry",
       message:
-        "Do you want to enable Github CI workflow?",
+        "What Docker registry do you want to use for main branch releases?",
+      default: "docker.io",
     };
 
-    const enableGitHubWorkflowAnswer = inquirer.prompt([
-      enableGithubWorkflowQuestion
+    const mainDockerRegistryAnswer = inquirer.prompt([
+      mainDockerRegistryQuestion,
     ]);
 
-    let mainDockerRegistryAnswer;
-    let mainDockerRepositoryNamespaceAnswer;
-    if (enableGitHubWorkflowAnswer.shouldEnableGithubWorkflow) {
-      const mainDockerRegistryQuestion = {
-        type: "input",
-        name: "dockerRegistry",
-        message:
-          "What Docker registry do you want to use for main branch releases?",
-        default: "docker.io",
-      };
+    const mainDockerRepositoryNamespaceQuestion = {
+      type: "input",
+      name: "dockerRepositoryNamespace",
+      message:
+        "What Docker repository namespace do you want to use for main branch releases?",
+    };
 
-      mainDockerRegistryAnswer = inquirer.prompt([
-        mainDockerRegistryQuestion,
-      ]);
-
-      const mainDockerRepositoryNamespaceQuestion = {
-        type: "input",
-        name: "dockerRepositoryNamespace",
-        message:
-          "What Docker repository namespace do you want to use for main branch releases?",
-      };
-
-      mainDockerRepositoryNamespaceAnswer = inquirer.prompt([
-        mainDockerRepositoryNamespaceQuestion,
-      ]);
-    }
+    const mainDockerRepositoryNamespaceAnswer = inquirer.prompt([
+      mainDockerRepositoryNamespaceQuestion,
+    ]);
 
     const sonarOrganizationQuestion = {
       type: "input",
@@ -143,7 +136,7 @@ async function createMicroserviceProject(microserviceName) {
 
     const dependentBackkMicroservicesQuestion = {
       type: "input",
-      name: "dependentBackkMicroservice",
+      name: "dependentBackkMicroservices",
       message:
         "What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas",
     };
@@ -184,15 +177,18 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
-          /\/\/ const dataStore = new MySqlDataStore\(\);/g
+          /\/\/ const dataStore = new MySqlDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new MySqlDataStore();"]
+        to: ["", "", "", "", "", "", "const dataStore = new MySqlDataStore();"],
       });
       await replaceInFile({
-        files: [microserviceDir + '/package.json'],
+        files: [microserviceDir + "/package.json"],
         from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"pg": "\^8.0.2",\s*/g],
-        to: ['', '']
+        to: ["", ""],
       });
+      delete dockerComposeObj.services.postgresql;
+      delete dockerComposeObj.services.mongodb;
+      dockerComposeObj.services.microservice.depends_on.push("mysql");
     } else if (databaseAnswer.database === "PostgreSQL or compatible") {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
@@ -205,14 +201,25 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new PostgreSqlDataStore();"]
+        to: [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "const dataStore = new PostgreSqlDataStore();",
+        ],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({
-        files: [microserviceDir + '/package.json'],
+        files: [microserviceDir + "/package.json"],
         from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
-        to: ['', '']
+        to: ["", ""],
       });
+      delete dockerComposeObj.services.mysql;
+      delete dockerComposeObj.services.mongodb;
+      dockerComposeObj.services.microservice.depends_on.push("postgresql");
     } else if (databaseAnswer.database === "MongoDB") {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
@@ -223,16 +230,27 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
-          /\/\/ const dataStore = new MongoDbDataStore\(\);/g
+          /\/\/ const dataStore = new MongoDbDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new MongoDbDataStore();"]
+        to: [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "const dataStore = new MongoDbDataStore();",
+        ],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({
-        files: [microserviceDir + '/package.json'],
+        files: [microserviceDir + "/package.json"],
         from: [/\s*"pg": "\^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
-        to: ['', '']
+        to: ["", ""],
       });
+      delete dockerComposeObj.services.postgresql;
+      delete dockerComposeObj.services.mysql;
+      dockerComposeObj.services.microservice.depends_on.push("mongodb");
     } else {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
@@ -245,118 +263,144 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();"]
+        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();"],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({
-        files: [microserviceDir + '/package.json'],
-        from: [/\s*"pg": "\^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g, /\s*"mongodb": "3.6.6",\s*/g],
-        to: ['', '', '']
+        files: [microserviceDir + "/package.json"],
+        from: [
+          /\s*"pg": "\^8.0.2",\s*/g,
+          /\s*"mysql2": "2.2.5",\s*/g,
+          /\s*"mongodb": "3.6.6",\s*/g,
+        ],
+        to: ["", "", ""],
+      });
+      delete dockerComposeObj.services.postgresql;
+      delete dockerComposeObj.services.mongodb;
+      delete dockerComposeObj.services.mysql;
+    }
+
+    if (!requestProcessorsAnswer.requestProcessors.includes("HTTP server")) {
+      await replaceInFile({
+        files: [microserviceDir + "/src/main.ts"],
+        from: [/HttpServer,\s*/g, /new HttpServer\(\),\s*/g],
+        to: ["", ""],
+      });
+    } else if (
+      !requestProcessorsAnswer.requestProcessors.includes("Kafka consumer")
+    ) {
+      await replaceInFile({
+        files: [microserviceDir + "/src/main.ts"],
+        from: [/KafkaConsumer,\s*/g, /new KafkaConsumer\(\),\s*/g],
+        to: ["", ""],
+      });
+    } else if (
+      !requestProcessorsAnswer.requestProcessors.includes("Redis consumer")
+    ) {
+      await replaceInFile({
+        files: [microserviceDir + "/src/main.ts"],
+        from: [/, RedisConsumer/g, /new RedisConsumer\(\)/g],
+        to: ["", ""],
       });
     }
 
-    if (!requestProcessorsAnswer.requestProcessors.includes('HTTP server')) {
-      await replaceInFile({
-        files: [microserviceDir + "/src/main.ts"],
-        from: [
-          /HttpServer,\s*/g,
-          /new HttpServer\(\),\s*/g
-        ],
-        to: ["", ""]
-      });
-    } else if (!requestProcessorsAnswer.requestProcessors.includes('Kafka consumer')) {
-      await replaceInFile({
-        files: [microserviceDir + "/src/main.ts"],
-        from: [
-          /KafkaConsumer,\s*/g,
-          /new KafkaConsumer\(\),\s*/g
-        ],
-        to: ["", ""]
-      });
-    } else if (!requestProcessorsAnswer.requestProcessors.includes('Redis consumer')) {
-      await replaceInFile({
-        files: [microserviceDir + "/src/main.ts"],
-        from: [
-          /, RedisConsumer/g,
-          /new RedisConsumer\(\)/g
-        ],
-        to: ["", ""]
-      });
-    }
-
-    if (requestProcessorsAnswer.requestProcessors.includes('HTTP server')) {
-      if (httpVersionAnswer.httpVersion === 'HTTP/2') {
+    if (requestProcessorsAnswer.requestProcessors.includes("HTTP server")) {
+      if (httpVersionAnswer.httpVersion === "HTTP/2") {
         await replaceInFile({
           files: [microserviceDir + "/src/main.ts"],
-          from: [
-            /HttpServer\(\)/g
-          ],
-          to: ["HttpServer(2)"]
+          from: [/HttpServer\(\)/g],
+          to: ["HttpServer(2)"],
         });
       }
     }
 
-    if (!kafkaUsageAnswer.doesUseKafka) {
+    if (kafkaUsageAnswer.doesUseKafka) {
+      dockerComposeObj.services.microservice.depends_on.push("kafka");
+      dockerComposeCommandParts.push('kafka:9092');
+    } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [
-          /\s*"kafkajs": "1.15.0",\s*/g
-        ],
-        to: [""]
+        from: [/\s*"kafkajs": "1.15.0",\s*/g],
+        to: [""],
       });
+      delete dockerComposeObj.services.kafka;
+      delete dockerComposeObj.volumes;
     }
 
-    if (!redisUsageAnswer.doesUseRedis) {
+    if (redisUsageAnswer.doesUseRedis) {
+      dockerComposeObj.services.microservice.depends_on.push("redis");
+      dockerComposeCommandParts.push('redis:6379');
+    } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [
-          /\s*"ioredis": "\^4.19.2",\s*/g
-        ],
-        to: [""]
+        from: [/\s*"ioredis": "\^4.19.2",\s*/g],
+        to: [""],
       });
+      delete dockerComposeObj.services.redis;
     }
 
     await replaceInFile({
       files: [microserviceDir + "/.env.dev", microserviceDir + "/.env.ci"],
-      from: [
-        /DOCKER_REGISTRY=docker.io/g
-      ],
-      to: ["DOCKER_REGISTRY=" + devDockerRegistryAnswer.dockerRegistry]
+      from: [/DOCKER_REGISTRY=docker.io/g],
+      to: ["DOCKER_REGISTRY=" + devDockerRegistryAnswer.dockerRegistry],
     });
 
     await replaceInFile({
       files: [microserviceDir + "/.env.dev", microserviceDir + "/.env.ci"],
-      from: [
-        /DOCKER_REPOSITORY=<your-repository-namespace>\/backk-starter/g
+      from: [/DOCKER_REPOSITORY=<your-repository-namespace>\/backk-starter/g],
+      to: [
+        "DOCKER_REPOSITORY=" +
+          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
+          "/" +
+          microserviceName,
       ],
-      to: ["DOCKER_REPOSITORY=" + devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace + '/' + microserviceName]
     });
 
-    if (enableGitHubWorkflowAnswer.shouldEnableGithubWorkflow) {
-      await replaceInFile({
-        files: [microserviceDir + "/.github/workflows/ci.yaml"],
-        from: [
-          /docker.io/g
-        ],
-        to: [mainDockerRegistryAnswer.dockerRegistry]
-      });
+    await replaceInFile({
+      files: [microserviceDir + "/.github/workflows/ci.yaml"],
+      from: [/docker.io/g],
+      to: [mainDockerRegistryAnswer.dockerRegistry],
+    });
 
-      await replaceInFile({
-        files: [microserviceDir + "/.github/workflows/ci.yaml"],
-        from: [
-          /<docker-repository-namespace>/g
-        ],
-        to: [mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace]
-      });
-    }
+    await replaceInFile({
+      files: [microserviceDir + "/.github/workflows/ci.yaml"],
+      from: [/<docker-repository-namespace>/g],
+      to: [mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace],
+    });
 
     await replaceInFile({
       files: [microserviceDir + "/sonar-project.properties"],
-      from: [
-        /<your-organization-here>/g
-      ],
-      to: [sonarOrganizationAnswer.sonarOrganization]
+      from: [/<your-organization-here>/g],
+      to: [sonarOrganizationAnswer.sonarOrganization],
     });
+
+    const EXPOSED_BASE_PORT = 18080;
+    dependentBackkMicroservicesAnswer.dependentBackkMicroservices.split(',').forEach((microserviceName, index) => {
+      const trimmedMicroserviceName = microserviceName.trim();
+      dockerComposeObj.services[trimmedMicroserviceName] = {
+        container_name: trimmedMicroserviceName,
+        image: mainDockerRegistryAnswer.dockerRegistry + '/' + mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace + '/' + trimmedMicroserviceName,
+        env_file: '.env.ci',
+        restart: 'always',
+        ports: ["" + EXPOSED_BASE_PORT + index + ":8080"]
+      }
+      dockerComposeObj.services.microservice.depends_on.push(trimmedMicroserviceName);
+      dockerComposeCommandParts.push(trimmedMicroserviceName + ':8080')
+    });
+
+    const dockerComposeCommand = dockerComposeCommandParts.join(',') + ' -t 600';
+
+    await replaceInFile({
+      files: [microserviceDir + "/scripts/run-integration-tests-in-ci.sh"],
+      from: [/docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001 -t 600/g],
+      to: [dockerComposeCommand],
+    });
+
+    const dockerComposeFileContent = YAML.stringify(dockerComposeObj);
+    fs.writeFileSync(
+      microserviceDir + "/docker-compose.yml",
+      dockerComposeFileContent
+    );
 
     console.log(
       "Successfully created Backk microservice project: " + microserviceName

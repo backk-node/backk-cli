@@ -28,7 +28,8 @@
   "dependencies": {
     "copyfiles": "^2.4.1",
     "inquirer": "8.2.0",
-    "replace-in-file": "^6.3.2"
+    "replace-in-file": "^6.3.2",
+    "yaml": "^1.10.2"
   },
   "devDependencies": {
     "prettier": "2.5.1"

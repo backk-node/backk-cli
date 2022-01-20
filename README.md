@@ -25,9 +25,8 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
 * Do you want to access remote microservices using Redis? (Yes/No) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
 * What Docker registry do you want to use in development environment? (Default: docker.io)
 * What Docker repository namespace do you want to use in development environment?
-* Do you want to enable GitHub CI workflow? (Yes/No)
-  * What Docker registry do you want to use for main branch releases? (Default: docker.io)
-  * What Docker repository namespace do you want to use for main branch releases?
+* What Docker registry do you want to use for main branch releases? (Default: docker.io)
+* What Docker repository namespace do you want to use for main branch releases?
 * What is SonarCloud/SonarQube organisation?
 * What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas
 

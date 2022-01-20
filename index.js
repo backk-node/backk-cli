@@ -21,6 +21,6 @@ if (!microserviceName.match(/^[a-z\-0-9]$/)) {
 }
 
 // noinspection JSIgnoredPromiseFromCall
-createMicroserviceProject();
+createMicroserviceProject(microserviceName);
 
 
