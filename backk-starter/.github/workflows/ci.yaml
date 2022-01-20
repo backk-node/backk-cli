@@ -131,14 +131,14 @@ jobs:
           push: true
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-          tags: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter:${{ steps.setBuildVersion.outputs.value }}
+          tags: <docker-repository-namespace>/backk-starter:${{ steps.setBuildVersion.outputs.value }}
 
       - name: Extract metadata for building and pushing Docker image when in main or maintenance branch
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/patch_v*'
         id: dockerImageMetadata
         uses: docker/metadata-action@v3
         with:
-          images: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter
+          images: <docker-repository-namespace>/backk-starter
           tags: |
             type=semver,pattern={{version}},value=${{ steps.setBuildVersion.outputs.value }}
 
@@ -159,7 +159,7 @@ jobs:
         id: anchoreScan
         uses: anchore/scan-action@v3
         with:
-          image: ${{ secrets.DOCKER_REGISTRY_USERNAME }}/backk-starter:latest
+          image: <docker-repository-namespace>/backk-starter:latest
           fail-build: false
           severity-cutoff: high
 

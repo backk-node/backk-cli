@@ -10,7 +10,7 @@ auth:
   publicKeyPath: ""
   jwtRolesClaimPath: ""
 integrationTesting:
-  testUserRole: vitjaAdmin
+  testUserRole: admin
 secrets:
   encryptionKey: abcdefghijklmnopqrstuvxyz01234567890123456789
 httpServer:

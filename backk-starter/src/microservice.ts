@@ -29,7 +29,7 @@ class MicroserviceImpl extends Microservice {
   private readonly startupCheckService = new StartupCheckServiceImpl(dataStore);
   private readonly responseCacheConfigService = new ResponseCacheConfigServiceImpl();
 
-  // TODO: Create your service(s) classes under services directory and instantiate them here
+  // TODO: Instantiate your services here
   private readonly exampleService = new ExampleServiceImpl(dataStore);
 
   constructor() {

@@ -93,28 +93,43 @@ async function createMicroserviceProject(microserviceName) {
       devDockerRepositoryNamespaceQuestion,
     ]);
 
-    const mainDockerRegistryQuestion = {
-      type: "input",
-      name: "dockerRegistry",
+    const enableGithubWorkflowQuestion = {
+      type: "confirm",
+      name: "shouldEnableGithubWorkflow",
       message:
-        "What Docker registry do you want to use for main branch releases?",
-      default: "docker.io",
+        "Do you want to enable Github CI workflow?",
     };
 
-    const mainDockerRegistryAnswer = inquirer.prompt([
-      mainDockerRegistryQuestion,
+    const enableGitHubWorkflowAnswer = inquirer.prompt([
+      enableGithubWorkflowQuestion
     ]);
 
-    const mainDockerRepositoryNamespaceQuestion = {
-      type: "input",
-      name: "dockerRepositoryNamespace",
-      message:
-        "What Docker repository namespace do you want to use for main branch releases?",
-    };
+    let mainDockerRegistryAnswer;
+    let mainDockerRepositoryNamespaceAnswer;
+    if (enableGitHubWorkflowAnswer.shouldEnableGithubWorkflow) {
+      const mainDockerRegistryQuestion = {
+        type: "input",
+        name: "dockerRegistry",
+        message:
+          "What Docker registry do you want to use for main branch releases?",
+        default: "docker.io",
+      };
 
-    const mainDockerRepositoryNamespaceAnswer = inquirer.prompt([
-      mainDockerRepositoryNamespaceQuestion,
-    ]);
+      mainDockerRegistryAnswer = inquirer.prompt([
+        mainDockerRegistryQuestion,
+      ]);
+
+      const mainDockerRepositoryNamespaceQuestion = {
+        type: "input",
+        name: "dockerRepositoryNamespace",
+        message:
+          "What Docker repository namespace do you want to use for main branch releases?",
+      };
+
+      mainDockerRepositoryNamespaceAnswer = inquirer.prompt([
+        mainDockerRepositoryNamespaceQuestion,
+      ]);
+    }
 
     const sonarOrganizationQuestion = {
       type: "input",
@@ -175,7 +190,7 @@ async function createMicroserviceProject(microserviceName) {
       });
       await replaceInFile({
         files: [microserviceDir + '/package.json'],
-        from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"pg": "^8.0.2",\s*/g],
+        from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"pg": "\^8.0.2",\s*/g],
         to: ['', '']
       });
     } else if (databaseAnswer.database === "PostgreSQL or compatible") {
@@ -215,7 +230,7 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile(replaceConfig);
       await replaceInFile({
         files: [microserviceDir + '/package.json'],
-        from: [/\s*"pg": "^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
+        from: [/\s*"pg": "\^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
         to: ['', '']
       });
     } else {
@@ -235,7 +250,7 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile(replaceConfig);
       await replaceInFile({
         files: [microserviceDir + '/package.json'],
-        from: [/\s*"pg": "^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g, /\s*"mongodb": "3.6.6",\s*/g],
+        from: [/\s*"pg": "\^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g, /\s*"mongodb": "3.6.6",\s*/g],
         to: ['', '', '']
       });
     }
@@ -274,7 +289,7 @@ async function createMicroserviceProject(microserviceName) {
         await replaceInFile({
           files: [microserviceDir + "/src/main.ts"],
           from: [
-            /HttpServer()/g
+            /HttpServer\(\)/g
           ],
           to: ["HttpServer(2)"]
         });
@@ -295,7 +310,7 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"ioredis": "^4.19.2",\s*/g
+          /\s*"ioredis": "\^4.19.2",\s*/g
         ],
         to: [""]
       });
@@ -317,7 +332,31 @@ async function createMicroserviceProject(microserviceName) {
       to: ["DOCKER_REPOSITORY=" + devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace + '/' + microserviceName]
     });
 
+    if (enableGitHubWorkflowAnswer.shouldEnableGithubWorkflow) {
+      await replaceInFile({
+        files: [microserviceDir + "/.github/workflows/ci.yaml"],
+        from: [
+          /docker.io/g
+        ],
+        to: [mainDockerRegistryAnswer.dockerRegistry]
+      });
 
+      await replaceInFile({
+        files: [microserviceDir + "/.github/workflows/ci.yaml"],
+        from: [
+          /<docker-repository-namespace>/g
+        ],
+        to: [mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace]
+      });
+    }
+
+    await replaceInFile({
+      files: [microserviceDir + "/sonar-project.properties"],
+      from: [
+        /<your-organization-here>/g
+      ],
+      to: [sonarOrganizationAnswer.sonarOrganization]
+    });
 
     console.log(
       "Successfully created Backk microservice project: " + microserviceName
