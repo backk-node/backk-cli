@@ -8,10 +8,14 @@ const YAML = require("yaml");
 async function createMicroserviceProject(microserviceName) {
   try {
     const dockerComposeObj = YAML.parse(
-      process.cwd() +  + "/backk-starter/docker-compose.yml"
+      fs.readFileSync(process.cwd() + "/backk-starter/docker-compose.yml", {
+        encoding: "utf8",
+      })
     );
 
-    const dockerComposeCommandParts = ["docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001"];
+    const dockerComposeCommandParts = [
+      "docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001",
+    ];
 
     const databaseQuestion = {
       type: "list",
@@ -39,6 +43,7 @@ async function createMicroserviceProject(microserviceName) {
         return true;
       },
     };
+
     const requestProcessorsAnswer = await inquirer.prompt([
       requestProcessorQuestion,
     ]);
@@ -53,7 +58,7 @@ async function createMicroserviceProject(microserviceName) {
         choices: ["HTTP/1.1", "HTTP/2"],
       };
 
-      httpVersionAnswer = inquirer.prompt(httpVersionQuestion);
+      httpVersionAnswer = await inquirer.prompt(httpVersionQuestion);
     }
 
     let kafkaUsageAnswer = { doesUseKafka: true };
@@ -62,9 +67,10 @@ async function createMicroserviceProject(microserviceName) {
         type: "confirm",
         name: "doesUseKafka",
         message: "Do you want to access remote microservices using Kafka?",
+        default: false,
       };
 
-      kafkaUsageAnswer = inquirer.prompt(kafkaUsageQuestion);
+      kafkaUsageAnswer = await inquirer.prompt(kafkaUsageQuestion);
     }
 
     let redisUsageAnswer = { doesUseRedis: true };
@@ -73,9 +79,10 @@ async function createMicroserviceProject(microserviceName) {
         type: "confirm",
         name: "doesUseRedis",
         message: "Do you want to access remote microservices using Redis?",
+        default: false,
       };
 
-      redisUsageAnswer = inquirer.prompt(redisUsageQuestion);
+      redisUsageAnswer = await inquirer.prompt(redisUsageQuestion);
     }
 
     const devDockerRegistryQuestion = {
@@ -86,7 +93,7 @@ async function createMicroserviceProject(microserviceName) {
       default: "docker.io",
     };
 
-    const devDockerRegistryAnswer = inquirer.prompt([
+    const devDockerRegistryAnswer = await inquirer.prompt([
       devDockerRegistryQuestion,
     ]);
 
@@ -95,9 +102,15 @@ async function createMicroserviceProject(microserviceName) {
       name: "dockerRepositoryNamespace",
       message:
         "What Docker repository namespace do you want to use in development environment?",
+      validate(input) {
+        if (!input) {
+          return "Docker repository namespace cannot be empty.";
+        }
+        return true;
+      },
     };
 
-    const devDockerRepositoryNamespaceAnswer = inquirer.prompt([
+    const devDockerRepositoryNamespaceAnswer = await inquirer.prompt([
       devDockerRepositoryNamespaceQuestion,
     ]);
 
@@ -109,7 +122,7 @@ async function createMicroserviceProject(microserviceName) {
       default: "docker.io",
     };
 
-    const mainDockerRegistryAnswer = inquirer.prompt([
+    const mainDockerRegistryAnswer = await inquirer.prompt([
       mainDockerRegistryQuestion,
     ]);
 
@@ -118,9 +131,16 @@ async function createMicroserviceProject(microserviceName) {
       name: "dockerRepositoryNamespace",
       message:
         "What Docker repository namespace do you want to use for main branch releases?",
+      validate(input) {
+        if (!input) {
+          return "Docker repository namespace cannot be empty.";
+        }
+
+        return true;
+      },
     };
 
-    const mainDockerRepositoryNamespaceAnswer = inquirer.prompt([
+    const mainDockerRepositoryNamespaceAnswer = await inquirer.prompt([
       mainDockerRepositoryNamespaceQuestion,
     ]);
 
@@ -128,9 +148,16 @@ async function createMicroserviceProject(microserviceName) {
       type: "input",
       name: "sonarOrganization",
       message: "What is SonarCloud/SonarQube organisation?",
+      validate(input) {
+        if (!input) {
+          return "Organization cannot be empty.";
+        }
+
+        return true;
+      },
     };
 
-    const sonarOrganizationAnswer = inquirer.prompt([
+    const sonarOrganizationAnswer = await inquirer.prompt([
       sonarOrganizationQuestion,
     ]);
 
@@ -141,13 +168,38 @@ async function createMicroserviceProject(microserviceName) {
         "What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas",
     };
 
-    const dependentBackkMicroservicesAnswer = inquirer.prompt([
+    const dependentBackkMicroservicesAnswer = await inquirer.prompt([
       dependentBackkMicroservicesQuestion,
     ]);
 
     const microserviceDir = process.cwd() + "/" + microserviceName;
-    fs.mkdirSync(microserviceDir);
-    copyfiles(["backk-starter/*", microserviceName]);
+
+    if (fs.existsSync(microserviceDir)) {
+      if (fs.readdirSync(microserviceDir).length !== 0) {
+        console.error(
+          "Cannot create Backk microservice project. Directory: " +
+            microserviceDir +
+            " is not empty."
+        );
+        process.exit(1);
+      }
+    } else {
+      fs.mkdirSync(microserviceDir);
+    }
+
+    await new Promise((resolve, reject) => {
+      copyfiles(
+        ["backk-starter/**/*", microserviceName],
+        { up: 1, all: true },
+        (error) => {
+          if (error) {
+            reject();
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
 
     const replaceConfig = {
       files: [
@@ -316,7 +368,7 @@ async function createMicroserviceProject(microserviceName) {
 
     if (kafkaUsageAnswer.doesUseKafka) {
       dockerComposeObj.services.microservice.depends_on.push("kafka");
-      dockerComposeCommandParts.push('kafka:9092');
+      dockerComposeCommandParts.push("kafka:9092");
     } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
@@ -329,7 +381,7 @@ async function createMicroserviceProject(microserviceName) {
 
     if (redisUsageAnswer.doesUseRedis) {
       dockerComposeObj.services.microservice.depends_on.push("redis");
-      dockerComposeCommandParts.push('redis:6379');
+      dockerComposeCommandParts.push("redis:6379");
     } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
@@ -375,24 +427,36 @@ async function createMicroserviceProject(microserviceName) {
     });
 
     const EXPOSED_BASE_PORT = 18080;
-    dependentBackkMicroservicesAnswer.dependentBackkMicroservices.split(',').forEach((microserviceName, index) => {
-      const trimmedMicroserviceName = microserviceName.trim();
-      dockerComposeObj.services[trimmedMicroserviceName] = {
-        container_name: trimmedMicroserviceName,
-        image: mainDockerRegistryAnswer.dockerRegistry + '/' + mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace + '/' + trimmedMicroserviceName,
-        env_file: '.env.ci',
-        restart: 'always',
-        ports: ["" + EXPOSED_BASE_PORT + index + ":8080"]
-      }
-      dockerComposeObj.services.microservice.depends_on.push(trimmedMicroserviceName);
-      dockerComposeCommandParts.push(trimmedMicroserviceName + ':8080')
-    });
+    dependentBackkMicroservicesAnswer.dependentBackkMicroservices
+      .split(",")
+      .forEach((microserviceName, index) => {
+        const trimmedMicroserviceName = microserviceName.trim();
+        dockerComposeObj.services[trimmedMicroserviceName] = {
+          container_name: trimmedMicroserviceName,
+          image:
+            mainDockerRegistryAnswer.dockerRegistry +
+            "/" +
+            mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
+            "/" +
+            trimmedMicroserviceName,
+          env_file: ".env.ci",
+          restart: "always",
+          ports: ["" + EXPOSED_BASE_PORT + index + ":8080"],
+        };
+        dockerComposeObj.services.microservice.depends_on.push(
+          trimmedMicroserviceName
+        );
+        dockerComposeCommandParts.push(trimmedMicroserviceName + ":8080");
+      });
 
-    const dockerComposeCommand = dockerComposeCommandParts.join(',') + ' -t 600';
+    const dockerComposeCommand =
+      dockerComposeCommandParts.join(",") + " -t 600";
 
     await replaceInFile({
       files: [microserviceDir + "/scripts/run-integration-tests-in-ci.sh"],
-      from: [/docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001 -t 600/g],
+      from: [
+        /docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001 -t 600/g,
+      ],
       to: [dockerComposeCommand],
     });
 
