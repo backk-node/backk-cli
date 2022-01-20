@@ -32,10 +32,12 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
 
 ## Create a new Backk microservice project
 
-Execute below command to create a new Backk microservice project.
-This command will create a directory with given microservice name in the current directory.
+Execute the below command to create a new Backk microservice project.
+This command will create a directory with given `microservice-name` in the current directory.
 
 ```bash
 npx backk-cli@latest create <microservice-name>
 cd <microservice-name>
 ```
+
+Follow further instructions in README.md of the created project.
