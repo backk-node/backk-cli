@@ -467,7 +467,10 @@ async function createMicroserviceProject(microserviceName) {
     );
 
     console.log(
-      "Successfully created Backk microservice project: " + microserviceName
+      "Successfully created project for Backk microservice '" +
+        microserviceName +
+        "' in directory: " +
+        microserviceDir
     );
   } catch (error) {
     console.log(error);
