@@ -3,6 +3,7 @@ const inquirer = require("inquirer");
 const copyfiles = require("copyfiles");
 const { replaceInFile } = require("replace-in-file");
 const YAML = require("yaml");
+const chalk = require('chalk');
 
 // noinspection FunctionWithMoreThanThreeNegationsJS,OverlyComplexFunctionJS,FunctionTooLongJS
 async function createMicroserviceProject(microserviceName) {
@@ -180,11 +181,11 @@ async function createMicroserviceProject(microserviceName) {
 
     if (fs.existsSync(microserviceDir)) {
       if (fs.readdirSync(microserviceDir).length !== 0) {
-        console.error(
-          "Cannot create Backk microservice project. Directory: " +
+        console.log(chalk.red(
+          "ERROR! Cannot create Backk microservice project. Directory: " +
             microserviceDir +
             " is not empty."
-        );
+        ));
         process.exit(1);
       }
     } else {
@@ -471,14 +472,14 @@ async function createMicroserviceProject(microserviceName) {
     );
 
     console.log(
-      "Successfully created project for Backk microservice '" +
+      chalk.green("Successfully created project for Backk microservice '" +
         microserviceName +
         "' in directory: " +
         microserviceDir
-    );
+    ));
   } catch (error) {
     console.log(error);
-    console.log('Failed to create Backk microservice project: ' + microserviceName);
+    console.log(chalk.red('ERROR! Failed to create Backk microservice project: ' + microserviceName));
     process.exit(1);
   }
 }
