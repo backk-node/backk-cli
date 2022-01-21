@@ -228,15 +228,15 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
-          /\s*MongoDbDataStore,\s*/g,
-          /\s*PostgreSqlDataStore,\s*/g,
-          /\s*NullDataStore,\s*/g,
+          /\s\sMongoDbDataStore,\n/g,
+          /\s\sPostgreSqlDataStore\n/g,
+          /\s\sNullDataStore,\n/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new MySqlDataStore();"],
+        to: ["", "", "", "", "", "", "const dataStore = new MySqlDataStore();\n"],
       });
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
@@ -250,9 +250,9 @@ async function createMicroserviceProject(microserviceName) {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
-          /\s*MongoDbDataStore,\s*/g,
-          /\s*MySqlSqlDataStore,\s*/g,
-          /\s*NullDataStore,\s*/g,
+          /\s\sMongoDbDataStore,\n/g,
+          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sNullDataStore,\n/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
@@ -265,7 +265,7 @@ async function createMicroserviceProject(microserviceName) {
           "",
           "",
           "",
-          "const dataStore = new PostgreSqlDataStore();",
+          "const dataStore = new PostgreSqlDataStore();\n",
         ],
       };
       await replaceInFile(replaceConfig);
@@ -281,9 +281,9 @@ async function createMicroserviceProject(microserviceName) {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
-          /\s*PostgreSqlDataStore,\s*/g,
-          /\s*MySqlSqlDataStore,\s*/g,
-          /\s*NullDataStore,\s*/g,
+          /\s\sPostgreSqlDataStore\n/g,
+          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sNullDataStore,\n/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
@@ -296,7 +296,7 @@ async function createMicroserviceProject(microserviceName) {
           "",
           "",
           "",
-          "const dataStore = new MongoDbDataStore();",
+          "const dataStore = new MongoDbDataStore();\n",
         ],
       };
       await replaceInFile(replaceConfig);
@@ -312,15 +312,15 @@ async function createMicroserviceProject(microserviceName) {
       const replaceConfig = {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
-          /\s*PostgreSqlDataStore,\s*/g,
-          /\s*MySqlSqlDataStore,\s*/g,
-          /\s*MongoDbDataStore,\s*/g,
+          /\s\sPostgreSqlDataStore\n/g,
+          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sMongoDbDataStore,\n/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();"],
+        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();\n"],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({
@@ -343,7 +343,9 @@ async function createMicroserviceProject(microserviceName) {
         from: [/HttpServer,\s*/g, /new HttpServer\(\),\s*/g],
         to: ["", ""],
       });
-    } else if (
+    }
+
+    if (
       !requestProcessorsAnswer.requestProcessors.includes("Kafka consumer")
     ) {
       await replaceInFile({
@@ -351,7 +353,9 @@ async function createMicroserviceProject(microserviceName) {
         from: [/KafkaConsumer,\s*/g, /new KafkaConsumer\(\),\s*/g],
         to: ["", ""],
       });
-    } else if (
+    }
+
+    if (
       !requestProcessorsAnswer.requestProcessors.includes("Redis consumer")
     ) {
       await replaceInFile({
@@ -404,12 +408,10 @@ async function createMicroserviceProject(microserviceName) {
 
     await replaceInFile({
       files: [microserviceDir + "/.env.dev", microserviceDir + "/.env.ci"],
-      from: [/DOCKER_REPOSITORY=<your-repository-namespace>\/backk-starter/g],
+      from: [/DOCKER_REPOSITORY=<your-repository-namespace>/g],
       to: [
         "DOCKER_REPOSITORY=" +
-          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
-          "/" +
-          microserviceName,
+          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace
       ],
     });
 
@@ -422,7 +424,7 @@ async function createMicroserviceProject(microserviceName) {
     await replaceInFile({
       files: [microserviceDir + "/.github/workflows/ci.yaml"],
       from: [/<docker-repository-namespace>/g],
-      to: [mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace],
+      to: [mainDockerRegistryAnswer.dockerRegistry + '/' + mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace],
     });
 
     await replaceInFile({
