@@ -3,7 +3,7 @@
 # Option '-t' specifies the maximum wait time in seconds
 #
 # For example:
-# docker-compose --env-file .env.ci run wait-for-services-ready -c kafka:9092,redis:6379,redis-cache:6379,microservice:3001,other-microservice-1-default:8080,other-microservice-2-default:8080 -t 600
+# docker-compose --env-file .env.ci run wait-for-services-ready -c kafka:9092,redis:6379,microservice:3001,other-microservice-1:8080,other-microservice-2:8080 -t 600
 
 docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001 -t 600
 newman run generated/integrationtests/integrationTestsPostmanCollection.json

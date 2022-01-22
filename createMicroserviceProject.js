@@ -15,7 +15,7 @@ async function createMicroserviceProject(microserviceName) {
     );
 
     const dockerComposeCommandParts = [
-      "docker-compose --env-file .env.ci run wait-for-services-ready -c microservice:3001",
+      "docker-compose --env-file .env.ci run wait-for-services-ready -c ",
     ];
 
     const databaseQuestion = {
@@ -83,7 +83,8 @@ async function createMicroserviceProject(microserviceName) {
       const redisUsageQuestion = {
         type: "confirm",
         name: "doesUseRedis",
-        message: "Do you want to access remote microservices using Redis or use Redis response cache?",
+        message:
+          "Do you want to access remote microservices using Redis or use Redis response cache?",
         default: false,
       };
 
@@ -251,14 +252,15 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"mongodb": "3.6.6",\n/g,
-          /\s*"pg": "\^8.0.2",\n/g,
-          /\s*"@opentelemetry\/plugin-mongodb": "0.11.0",\n/g,
-          /\s*"@opentelemetry\/plugin-pg": "0.11.0",\n/g,
-          /\s*"@types\/mongodb": "3.6.12",\n/g,
-          /\s*"@types\/pg": "\^7.14.3",\n/g,
+          /\s{4}"mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg-pool": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/pg": "[\^]?\d+\.\d+\.\d+",\n/g,
         ],
-        to: ["", "", "", "", "", ""],
+        to: ["", "", "", "", "", "", ""],
       });
       delete dockerComposeObj.services.postgresql;
       delete dockerComposeObj.services.mongodb;
@@ -289,11 +291,11 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"mongodb": "3.6.6",\n/g,
-          /\s*"mysql2": "2.2.5",\n/g,
-          /\s*"@opentelemetry\/plugin-mongodb": "0.11.0",\n/g,
-          /\s*"@opentelemetry\/plugin-mysql": "0.11.0",\n/g,
-          /\s*"@types\/mongodb": "3.6.12",\n/g,
+          /\s{4}"mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"mysql2": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mysql": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
         ],
         to: ["", "", "", "", ""],
       });
@@ -326,13 +328,14 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"pg": "\^8.0.2",\n/g,
-          /\s*"mysql2": "2.2.5",\n/g,
-          /\s*"@opentelemetry\/plugin-pg": "0.11.0",\n/g,
-          /\s*"@opentelemetry\/plugin-mysql": "0.11.0",\n/g,
-          /\s*"@types\/pg": "\^7.14.3",\n/g,
+          /\s{4}"pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"mysql2": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg-pool": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mysql": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/pg": "[\^]?\d+\.\d+\.\d+",\n/g,
         ],
-        to: ["", "", "", "", ""],
+        to: ["", "", "", "", "", ""],
       });
       delete dockerComposeObj.services.postgresql;
       delete dockerComposeObj.services.mysql;
@@ -363,11 +366,17 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"pg": "\^8.0.2",\s*/g,
-          /\s*"mysql2": "2.2.5",\s*/g,
-          /\s*"mongodb": "3.6.6",\s*/g,
+          /\s{4}"pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"mysql2": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-pg-pool": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mysql": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/pg": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/mongodb": "[\^]?\d+\.\d+\.\d+",\n/g,
         ],
-        to: ["", "", ""],
+        to: ["", "", "", "", "", "", "", "", ""],
       });
       delete dockerComposeObj.services.postgresql;
       delete dockerComposeObj.services.mongodb;
@@ -414,7 +423,7 @@ async function createMicroserviceProject(microserviceName) {
     } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"kafkajs": "1.15.0",\n/g],
+        from: [/\s{4}"kafkajs": "[\^]?\d+\.\d+\.\d+",\n/g],
         to: [""],
       });
       delete dockerComposeObj.services.kafka;
@@ -428,9 +437,9 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
         from: [
-          /\s*"ioredis": "\^4.19.2",\n/g,
-          /\s*"@opentelemetry\/plugin-ioredis": "0.11.0",\n/g,
-          /\s*"@types\/ioredis": "\^4.17.7",\n/g
+          /\s{4}"ioredis": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@opentelemetry\/plugin-ioredis": "[\^]?\d+\.\d+\.\d+",\n/g,
+          /\s{4}"@types\/ioredis": "[\^]?\d+\.\d+\.\d+",\n/g,
         ],
         to: ["", "", ""],
       });
@@ -478,6 +487,10 @@ async function createMicroserviceProject(microserviceName) {
     dependentBackkMicroservicesAnswer.dependentBackkMicroservices
       .split(",")
       .forEach((microserviceName, index) => {
+        if (!microserviceName) {
+          return;
+        }
+
         const trimmedMicroserviceName = microserviceName.trim();
         dockerComposeObj.services[trimmedMicroserviceName] = {
           container_name: trimmedMicroserviceName,
@@ -489,16 +502,23 @@ async function createMicroserviceProject(microserviceName) {
             trimmedMicroserviceName,
           env_file: ".env.ci",
           restart: "always",
-          ports: ['"' + (EXPOSED_BASE_PORT + index).toString() + ':8080"'],
+          ports: [(EXPOSED_BASE_PORT + index).toString() + ":8080"],
         };
+
         dockerComposeObj.services.microservice.depends_on.push(
           trimmedMicroserviceName
         );
+
         dockerComposeCommandParts.push(trimmedMicroserviceName + ":8080");
       });
 
+    dockerComposeCommandParts.push("microservice:3001");
     const dockerComposeCommand =
-      dockerComposeCommandParts.join(",") + " -t 600";
+      dockerComposeCommandParts[0] +
+      dockerComposeCommandParts[1] +
+      (dockerComposeCommandParts.length > 2 ? "," : "") +
+      dockerComposeCommandParts.slice(2).join(",") +
+      " -t 600";
 
     await replaceInFile({
       files: [microserviceDir + "/scripts/run-integration-tests-in-ci.sh"],
@@ -513,6 +533,12 @@ async function createMicroserviceProject(microserviceName) {
       microserviceDir + "/docker-compose.yml",
       dockerComposeFileContent
     );
+
+    await replaceInFile({
+      files: [microserviceDir + "/docker-compose.yml"],
+      from: /\d+:\d+/g,
+      to: (match) => '"' + match + '"',
+    });
 
     console.log(
       chalk.green(
