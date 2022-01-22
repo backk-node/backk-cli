@@ -9,7 +9,7 @@ Node.js >= 12.19
 ## Preparation
 Before creating a new Backk microservice project with `backk-cli`, prepare to answer the following questions:
 
-* Which database do you want to use?
+* Which database do you want to use? (If you want to use distributed transactions, you have to select a database even if you don't need it otherwise)
   * MySQL or MariaDB or compatible
   * PostgreSQL or compatible
   * MongoDB
@@ -22,7 +22,7 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
   * HTTP/1.1 (default)
   * HTTP/2
 * Do you want to access remote microservices using Kafka? (Yes/**No**) (This will be asked only if you did not select Kafka consumer in one of the earlier questions)
-* Do you want to access remote microservices using Redis? (Yes/**No**) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
+* Do you want to access remote microservices using Redis or use Redis response cache? (Yes/**No**) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
 * What Docker registry do you want to use in development environment? (Default: docker.io)
 * What Docker repository namespace do you want to use in development environment?
 * What Docker registry do you want to use for main branch releases? (Default: docker.io)

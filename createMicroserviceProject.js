@@ -3,7 +3,7 @@ const inquirer = require("inquirer");
 const copyfiles = require("copyfiles");
 const { replaceInFile } = require("replace-in-file");
 const YAML = require("yaml");
-const chalk = require('chalk');
+const chalk = require("chalk");
 
 // noinspection FunctionWithMoreThanThreeNegationsJS,OverlyComplexFunctionJS,FunctionTooLongJS
 async function createMicroserviceProject(microserviceName) {
@@ -83,7 +83,7 @@ async function createMicroserviceProject(microserviceName) {
       const redisUsageQuestion = {
         type: "confirm",
         name: "doesUseRedis",
-        message: "Do you want to access remote microservices using Redis?",
+        message: "Do you want to access remote microservices using Redis or use Redis response cache?",
         default: false,
       };
 
@@ -181,11 +181,13 @@ async function createMicroserviceProject(microserviceName) {
 
     if (fs.existsSync(microserviceDir)) {
       if (fs.readdirSync(microserviceDir).length !== 0) {
-        console.log(chalk.red(
-          "ERROR! Cannot create Backk microservice project. Directory: " +
-            microserviceDir +
-            " is not empty."
-        ));
+        console.log(
+          chalk.red(
+            "ERROR! Cannot create Backk microservice project. Directory: " +
+              microserviceDir +
+              " is not empty."
+          )
+        );
         process.exit(1);
       }
     } else {
@@ -236,12 +238,27 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new NullDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new MySqlDataStore();\n"],
+        to: [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "const dataStore = new MySqlDataStore();\n",
+        ],
       });
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"pg": "\^8.0.2",\s*/g],
-        to: ["", ""],
+        from: [
+          /\s*"mongodb": "3.6.6",\n/g,
+          /\s*"pg": "\^8.0.2",\n/g,
+          /\s*"@opentelemetry\/plugin-mongodb": "0.11.0",\n/g,
+          /\s*"@opentelemetry\/plugin-pg": "0.11.0",\n/g,
+          /\s*"@types\/mongodb": "3.6.12",\n/g,
+          /\s*"@types\/pg": "\^7.14.3",\n/g,
+        ],
+        to: ["", "", "", "", "", ""],
       });
       delete dockerComposeObj.services.postgresql;
       delete dockerComposeObj.services.mongodb;
@@ -271,8 +288,14 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile(replaceConfig);
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"mongodb": "3.6.6",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
-        to: ["", ""],
+        from: [
+          /\s*"mongodb": "3.6.6",\n/g,
+          /\s*"mysql2": "2.2.5",\n/g,
+          /\s*"@opentelemetry\/plugin-mongodb": "0.11.0",\n/g,
+          /\s*"@opentelemetry\/plugin-mysql": "0.11.0",\n/g,
+          /\s*"@types\/mongodb": "3.6.12",\n/g,
+        ],
+        to: ["", "", "", "", ""],
       });
       delete dockerComposeObj.services.mysql;
       delete dockerComposeObj.services.mongodb;
@@ -302,8 +325,14 @@ async function createMicroserviceProject(microserviceName) {
       await replaceInFile(replaceConfig);
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"pg": "\^8.0.2",\s*/g, /\s*"mysql2": "2.2.5",\s*/g],
-        to: ["", ""],
+        from: [
+          /\s*"pg": "\^8.0.2",\n/g,
+          /\s*"mysql2": "2.2.5",\n/g,
+          /\s*"@opentelemetry\/plugin-pg": "0.11.0",\n/g,
+          /\s*"@opentelemetry\/plugin-mysql": "0.11.0",\n/g,
+          /\s*"@types\/pg": "\^7.14.3",\n/g,
+        ],
+        to: ["", "", "", "", ""],
       });
       delete dockerComposeObj.services.postgresql;
       delete dockerComposeObj.services.mysql;
@@ -320,7 +349,15 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);/g,
         ],
-        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();\n"],
+        to: [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "const dataStore = new NullDataStore();\n",
+        ],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({
@@ -345,9 +382,7 @@ async function createMicroserviceProject(microserviceName) {
       });
     }
 
-    if (
-      !requestProcessorsAnswer.requestProcessors.includes("Kafka consumer")
-    ) {
+    if (!requestProcessorsAnswer.requestProcessors.includes("Kafka consumer")) {
       await replaceInFile({
         files: [microserviceDir + "/src/main.ts"],
         from: [/KafkaConsumer,\s*/g, /new KafkaConsumer\(\),\s*/g],
@@ -355,9 +390,7 @@ async function createMicroserviceProject(microserviceName) {
       });
     }
 
-    if (
-      !requestProcessorsAnswer.requestProcessors.includes("Redis consumer")
-    ) {
+    if (!requestProcessorsAnswer.requestProcessors.includes("Redis consumer")) {
       await replaceInFile({
         files: [microserviceDir + "/src/main.ts"],
         from: [/, RedisConsumer/g, /new RedisConsumer\(\)/g],
@@ -381,7 +414,7 @@ async function createMicroserviceProject(microserviceName) {
     } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"kafkajs": "1.15.0",\s*/g],
+        from: [/\s*"kafkajs": "1.15.0",\n/g],
         to: [""],
       });
       delete dockerComposeObj.services.kafka;
@@ -394,8 +427,12 @@ async function createMicroserviceProject(microserviceName) {
     } else {
       await replaceInFile({
         files: [microserviceDir + "/package.json"],
-        from: [/\s*"ioredis": "\^4.19.2",\s*/g],
-        to: [""],
+        from: [
+          /\s*"ioredis": "\^4.19.2",\n/g,
+          /\s*"@opentelemetry\/plugin-ioredis": "0.11.0",\n/g,
+          /\s*"@types\/ioredis": "\^4.17.7",\n/g
+        ],
+        to: ["", "", ""],
       });
       delete dockerComposeObj.services.redis;
     }
@@ -411,7 +448,7 @@ async function createMicroserviceProject(microserviceName) {
       from: [/DOCKER_REPOSITORY=<your-repository-namespace>/g],
       to: [
         "DOCKER_REPOSITORY=" +
-          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace
+          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace,
       ],
     });
 
@@ -424,7 +461,11 @@ async function createMicroserviceProject(microserviceName) {
     await replaceInFile({
       files: [microserviceDir + "/.github/workflows/ci.yaml"],
       from: [/<docker-repository-namespace>/g],
-      to: [mainDockerRegistryAnswer.dockerRegistry + '/' + mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace],
+      to: [
+        mainDockerRegistryAnswer.dockerRegistry +
+          "/" +
+          mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace,
+      ],
     });
 
     await replaceInFile({
@@ -448,7 +489,7 @@ async function createMicroserviceProject(microserviceName) {
             trimmedMicroserviceName,
           env_file: ".env.ci",
           restart: "always",
-          ports: ["" + EXPOSED_BASE_PORT + index + ":8080"],
+          ports: ['"' + (EXPOSED_BASE_PORT + index).toString() + ':8080"'],
         };
         dockerComposeObj.services.microservice.depends_on.push(
           trimmedMicroserviceName
@@ -474,14 +515,21 @@ async function createMicroserviceProject(microserviceName) {
     );
 
     console.log(
-      chalk.green("Successfully created project for Backk microservice '" +
-        microserviceName +
-        "' in directory: " +
-        microserviceDir
-    ));
+      chalk.green(
+        "Successfully created project for Backk microservice '" +
+          microserviceName +
+          "' in directory: " +
+          microserviceDir
+      )
+    );
   } catch (error) {
     console.log(error);
-    console.log(chalk.red('ERROR! Failed to create Backk microservice project: ' + microserviceName));
+    console.log(
+      chalk.red(
+        "ERROR! Failed to create Backk microservice project: " +
+          microserviceName
+      )
+    );
     process.exit(1);
   }
 }

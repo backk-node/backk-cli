@@ -31,7 +31,7 @@ services:
     volumes:
       - "zookeeper_data:/bitnami"
     ports:
-      - "2181:2181"
+      - "12181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
@@ -66,12 +66,6 @@ services:
     restart: always
     ports:
       - "16379:6379"
-  redis-cache:
-    container_name: redis-cache
-    image: redis:6.2.6
-    restart: always
-    ports:
-      - "26379:6379"
 
 volumes:
   zookeeper_data:
