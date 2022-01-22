@@ -24,7 +24,7 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
 * Do you want to access remote microservices using Kafka? (Yes/**No**) (This will be asked only if you did not select Kafka consumer in one of the earlier questions)
 * Do you want to access remote microservices using Redis or use Redis response cache? (Yes/**No**) (This will be asked only if you did not select Redis consumer in one of the earlier questions)
 * What Docker registry do you want to use in development environment? (Default: docker.io)
-* What Docker repository namespace do you want to use in development environment?
+* What Docker repository namespace do you want to use in development environment? (For example, if your Docker repository is docker.io and namespace is my-app, your microservice Docker repository will be: docker.io/my-app/microservice-name)
 * What Docker registry do you want to use for main branch releases? (Default: docker.io)
 * What Docker repository namespace do you want to use for main branch releases?
 * What is SonarCloud/SonarQube organisation?
