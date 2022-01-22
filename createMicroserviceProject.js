@@ -270,7 +270,7 @@ async function createMicroserviceProject(microserviceName) {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
           /\s\sMongoDbDataStore,\n/g,
-          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sMySqlDataStore,\n/g,
           /\s\sNullDataStore,\n/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
@@ -307,7 +307,7 @@ async function createMicroserviceProject(microserviceName) {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
           /\s\sPostgreSqlDataStore\n/g,
-          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sMySqlDataStore,\n/g,
           /\s\sNullDataStore,\n/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
@@ -345,7 +345,7 @@ async function createMicroserviceProject(microserviceName) {
         files: [microserviceDir + "/src/microservice.ts"],
         from: [
           /\s\sPostgreSqlDataStore\n/g,
-          /\s\sMySqlSqlDataStore,\n/g,
+          /\s\sMySqlDataStore,\n/g,
           /\s\sMongoDbDataStore,\n/g,
           /\/\/ const dataStore = new PostgreSqlDataStore\(\);\s*/g,
           /\/\/ const dataStore = new MySqlDataStore\(\);\s*/g,
@@ -359,7 +359,7 @@ async function createMicroserviceProject(microserviceName) {
           "",
           "",
           "",
-          "const dataStore = new NullDataStore();\n",
+          "const dataStore = new NullDataStore();",
         ],
       };
       await replaceInFile(replaceConfig);
@@ -417,6 +417,12 @@ async function createMicroserviceProject(microserviceName) {
       }
     }
 
+    await replaceInFile({
+      files: [microserviceDir + "/src/main.ts"],
+      from: [/, ]/g],
+      to: ["]"],
+    });
+
     if (kafkaUsageAnswer.doesUseKafka) {
       dockerComposeObj.services.microservice.depends_on.push("kafka");
       dockerComposeCommandParts.push("kafka:9092");
@@ -427,6 +433,7 @@ async function createMicroserviceProject(microserviceName) {
         to: [""],
       });
       delete dockerComposeObj.services.kafka;
+      delete dockerComposeObj.services.zookeeper;
       delete dockerComposeObj.volumes;
     }
 
