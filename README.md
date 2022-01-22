@@ -1,7 +1,5 @@
 # backk-cli
 
-## :construction: Under construction!
-
 ## Prerequisites
 
 Node.js >= 12.19
@@ -33,7 +31,7 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
 ## Create a new Backk microservice project
 
 Execute the below command to create a new Backk microservice project.
-This command will create a directory with given `microservice-name` in the current directory.
+This command will create a directory named `microservice-name` in the current directory.
 
 ```bash
 npx backk-cli@latest create <microservice-name>
