@@ -120,6 +120,17 @@ async function createMicroserviceProject(microserviceName) {
       devDockerRepositoryNamespaceQuestion,
     ]);
 
+    console.log(
+      chalk.blue(
+        "Your development Docker repository is: " +
+          devDockerRegistryAnswer.dockerRegistry +
+          "/" +
+          devDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
+          "/" +
+          microserviceName
+      )
+    );
+
     const mainDockerRegistryQuestion = {
       type: "input",
       name: "dockerRegistry",
@@ -149,6 +160,17 @@ async function createMicroserviceProject(microserviceName) {
     const mainDockerRepositoryNamespaceAnswer = await inquirer.prompt([
       mainDockerRepositoryNamespaceQuestion,
     ]);
+
+    console.log(
+      chalk.blue(
+        "Your main release Docker repository is: " +
+        mainDockerRegistryAnswer.dockerRegistry +
+        "/" +
+        mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
+        "/" +
+        microserviceName
+      )
+    );
 
     const sonarOrganizationQuestion = {
       type: "input",
@@ -352,15 +374,7 @@ async function createMicroserviceProject(microserviceName) {
           /\/\/ const dataStore = new MongoDbDataStore\(\);\s*/g,
           /\/\/ const dataStore = new NullDataStore\(\);/g,
         ],
-        to: [
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "const dataStore = new NullDataStore();",
-        ],
+        to: ["", "", "", "", "", "", "const dataStore = new NullDataStore();"],
       };
       await replaceInFile(replaceConfig);
       await replaceInFile({

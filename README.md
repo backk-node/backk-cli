@@ -28,7 +28,7 @@ Before creating a new Backk microservice project with `backk-cli`, prepare to an
 * What Docker registry do you want to use for main branch releases? (Default: docker.io)
 * What Docker repository namespace do you want to use for main branch releases?
 * What is SonarCloud/SonarQube organisation?
-* What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas
+* What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas (For example: my-other-microservice-1,my-other-microservice-2)
 
 ## Create a new Backk microservice project
 
