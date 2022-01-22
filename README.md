@@ -1,5 +1,7 @@
 # backk-cli
 
+`backk-cli` is a command line tool for creating new Backk microservice projects.
+
 ## Prerequisites
 
 Node.js >= 12.19
