@@ -164,11 +164,11 @@ async function createMicroserviceProject(microserviceName) {
     console.log(
       chalk.blue(
         "Your main release Docker repository is: " +
-        mainDockerRegistryAnswer.dockerRegistry +
-        "/" +
-        mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
-        "/" +
-        microserviceName
+          mainDockerRegistryAnswer.dockerRegistry +
+          "/" +
+          mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
+          "/" +
+          microserviceName
       )
     );
 
@@ -193,7 +193,7 @@ async function createMicroserviceProject(microserviceName) {
       type: "input",
       name: "dependentBackkMicroservices",
       message:
-        "What other Backk microservices your microservice depends on? Provide the names of the microservices separated by commas",
+        "What other synchronous (HTTP-based) Backk microservices your microservice depends on? Provide the namespaced microservice names (<microservice-name>.<namespace>) separated by commas. If the namespace is default, it can be omitted.",
     };
 
     const dependentBackkMicroservicesAnswer = await inquirer.prompt([
@@ -507,30 +507,31 @@ async function createMicroserviceProject(microserviceName) {
     const EXPOSED_BASE_PORT = 18080;
     dependentBackkMicroservicesAnswer.dependentBackkMicroservices
       .split(",")
-      .forEach((microserviceName, index) => {
-        if (!microserviceName) {
+      .forEach((namespacedDependentMicroserviceName, index) => {
+        if (!namespacedDependentMicroserviceName) {
           return;
         }
 
-        const trimmedMicroserviceName = microserviceName.trim();
-        dockerComposeObj.services[trimmedMicroserviceName] = {
-          container_name: trimmedMicroserviceName,
+        const [dependentMicroserviceName, namespace] =
+          namespacedDependentMicroserviceName.trim().split(".");
+        const serviceName =
+          dependentMicroserviceName + "-" + (namespace ?? "default");
+        dockerComposeObj.services[serviceName] = {
+          container_name: serviceName,
           image:
             mainDockerRegistryAnswer.dockerRegistry +
             "/" +
             mainDockerRepositoryNamespaceAnswer.dockerRepositoryNamespace +
             "/" +
-            trimmedMicroserviceName,
+            dependentMicroserviceName,
           env_file: ".env.ci",
           restart: "always",
           ports: [(EXPOSED_BASE_PORT + index).toString() + ":8080"],
         };
 
-        dockerComposeObj.services.microservice.depends_on.push(
-          trimmedMicroserviceName
-        );
+        dockerComposeObj.services.microservice.depends_on.push(serviceName);
 
-        dockerComposeCommandParts.push(trimmedMicroserviceName + ":8080");
+        dockerComposeCommandParts.push(serviceName + ":8080");
       });
 
     dockerComposeCommandParts.push("microservice:3001");
