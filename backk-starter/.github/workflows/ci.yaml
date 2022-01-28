@@ -83,6 +83,9 @@ jobs:
           api-key: ${{ secrets.FOSSA_API_KEY }}
           run-tests: false
 
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v1.6.0
+
       - name: Log in to Docker registry
         uses: docker/login-action@v1
         with:
@@ -208,6 +211,14 @@ jobs:
 
       - name: Lint Helm chart
         run: helm lint -f helm/values/values-minikube.yaml helm/backk-starter
+
+      - name: Static code analysis for Helm chart with Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: helm/backk-starter
+          quiet: true
+          framework: kubernetes
+          soft_fail: false
 
       - name: Configure Git user
         run: |

@@ -29,6 +29,8 @@
     "preintegrationtest:ci": "npm run docker-compose:up",
     "integrationtest:ci": "scripts/run-integration-tests-in-ci.sh",
     "postintegrationtest:ci": "npm run docker-compose:down",
+    "dockerfile:lint": "docker run --rm -i hadolint/hadolint < Dockerfile",
+    "predocker:build": "npm run dockerfile:lint",
     "docker:build": "env-cmd -f .env.dev scripts/docker-build.sh",
     "predocker:push": "npm run docker:build",
     "docker:push": "env-cmd -f .env.dev scripts/docker-push.sh",
